@@ -11,6 +11,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.Toast;
@@ -23,6 +24,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
+    Button btnAddContact;
     String DB_PATH_SUFFIX = "/databases/"; //Thư mục chứa csdl trong đt <Mặc định>
     SQLiteDatabase database=null;//Tên csdl
     String DATABASE_NAME="contact.db"; //Tên file csdl
@@ -33,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     //Test
     ArrayList<String> dsTinhThanh=new ArrayList<>();
     private void addControls() {
+
         lv=findViewById(R.id.lv);
 //        dsTinhThanh.addAll(Arrays.asList(getResources().getStringArray()));
         myadapter=new ArrayAdapter<>(
@@ -68,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        btnAddContact = findViewById(R.id.btnAddContact);
         // Tạo các tham số cho ListView
         lv = findViewById(R.id.lv);
         mylist = new ArrayList<>();
@@ -109,6 +112,13 @@ public class MainActivity extends AppCompatActivity {
                 intent.putExtra("mybundle", mybundle);
                 //Khởi động intent
                 startActivity(intent);
+            }
+        });
+        btnAddContact.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent2 = new Intent(MainActivity.this, AddContact.class);
+                startActivity(intent2);
             }
         });
     }
