@@ -6,10 +6,13 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.SearchView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -27,6 +30,40 @@ public class MainActivity extends AppCompatActivity {
     ListView lv;
     ArrayList<String> mylist;
     ArrayAdapter<String> myadapter;
+    //Test
+    ArrayList<String> dsTinhThanh=new ArrayList<>();
+    private void addControls() {
+        lv=findViewById(R.id.lv);
+//        dsTinhThanh.addAll(Arrays.asList(getResources().getStringArray()));
+        myadapter=new ArrayAdapter<>(
+                this, android.R.layout.simple_list_item_1,dsTinhThanh
+        );
+        lv.setAdapter(myadapter);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main,menu);
+        //La
+        MenuItem menuItem=menu.findItem(R.id.mnu_cart);
+        //Lay search view ra
+        SearchView searchView= (SearchView) menuItem.getActionView();
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+            //Tim kiem toi dau su dung toi do
+            @Override
+            public boolean onQueryTextChange(String s) {
+                myadapter.getFilter().filter(s);
+                return false;
+            }
+        });
+        return super.onCreateOptionsMenu(menu);
+    }
+    //Test
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
