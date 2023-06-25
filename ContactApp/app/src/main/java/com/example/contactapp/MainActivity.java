@@ -2,6 +2,7 @@ package com.example.contactapp;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -12,6 +13,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.Toast;
@@ -24,7 +26,8 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
-    Button btnAddContact;
+    EditText edtName, edtNumber;
+    Button btnInsert, btnDelete, btnUpdate, btnQuery ;
     String DB_PATH_SUFFIX = "/databases/"; //Thư mục chứa csdl trong đt <Mặc định>
     SQLiteDatabase database=null;//Tên csdl
     String DATABASE_NAME="contact.db"; //Tên file csdl
@@ -65,13 +68,19 @@ public class MainActivity extends AppCompatActivity {
         });
         return super.onCreateOptionsMenu(menu);
     }
-    //Test
-    //tesstttttt
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        btnAddContact = findViewById(R.id.btnAddContact);
+        edtName = findViewById(R.id.edtName);
+        edtNumber = findViewById(R.id.edtNumber);
+
+        btnInsert = findViewById(R.id.btnInsert);
+        btnDelete = findViewById(R.id.btnDelete);
+        btnUpdate = findViewById(R.id.btnUpdate);
+        btnQuery = findViewById(R.id.btnQuery);
+        database=openOrCreateDatabase("contact.db",MODE_PRIVATE, null);
         // Tạo các tham số cho ListView
         lv = findViewById(R.id.lv);
         mylist = new ArrayList<>();
@@ -79,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
         lv.setAdapter(myadapter);
 
         processCopy();//Gọi hàm cop csdl từ thư mục assets vào thư mục database trong bộ nhớ đt
-        // Truy vấn CSDL và cập nhật hiển thị lên Listview
+         //Truy vấn CSDL và cập nhật hiển thị lên Listview
         database=openOrCreateDatabase("contact.db",MODE_PRIVATE, null);
         Cursor c = database.query("dbcontact", null,
                 null, null,null, null, null);
@@ -93,6 +102,81 @@ public class MainActivity extends AppCompatActivity {
         }
         c.close();
         myadapter.notifyDataSetChanged();
+
+        btnInsert.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+//                insert();
+
+                String name = edtName.getText().toString();
+                String number = edtNumber.getText().toString();
+                ContentValues myValues = new ContentValues();
+                myValues.put("number", number);
+                myValues.put("name", name);
+
+                String msg = "";
+                if (database.insert("dbcontact", null , myValues) ==  -1){
+                    msg = "Thêm thất bại!";
+                } else {
+                    msg = "Bạn đã thêm thành công!";
+                }
+                Toast.makeText(MainActivity.this,msg ,Toast.LENGTH_SHORT).show();
+            }
+        });
+        btnDelete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String name = edtName.getText().toString();
+                int n = database.delete("dbcontact", "name = ?", new String[]{name});
+                String msg = "";
+                if (n == 0){
+                    msg = "Không có bản ghi nào bị xóa";
+                }else {
+                    msg = n + "Xóa thành công!";
+                }
+                Toast.makeText(MainActivity.this, msg ,Toast.LENGTH_SHORT).show();
+            }
+        });
+        btnUpdate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String name = edtName.getText().toString();
+                String number = edtNumber.getText().toString();
+                ContentValues myValues = new ContentValues();
+                myValues.put("number", number);
+                myValues.put("name", name);
+                int n = database.update("dbcontact",myValues,"name = ?", new String[]{name});
+                String msg = "";
+                if (n == 0){
+                    msg = "Không có bản ghi nào được cập nhật.";
+                } else {
+                    msg = n + " bản ghi đã được cập nhật";
+                }
+                Toast.makeText(MainActivity.this, msg ,Toast.LENGTH_SHORT).show();
+            }
+        });
+        btnQuery.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mylist.clear();
+                processCopy();//Gọi hàm cop csdl từ thư mục assets vào thư mục database trong bộ nhớ đt
+                //Truy vấn CSDL và cập nhật hiển thị lên Listview
+                database=openOrCreateDatabase("contact.db",MODE_PRIVATE, null);
+                Cursor c = database.query("dbcontact", null,
+                        null, null,null, null, null);
+                String data = "";
+                c.moveToFirst();//Di chuyển con trỏ về bản ghi đầu tiên
+                while (c.isAfterLast() == false) // Nếu không phải là bản ghi cuối cùng
+                {
+                    data = c.getString(1) + "\n" + c.getString(0);
+                    mylist.add(data);
+                    c.moveToNext();
+                }
+                c.close();
+                myadapter.notifyDataSetChanged();
+            }
+        });
+
 
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -112,13 +196,6 @@ public class MainActivity extends AppCompatActivity {
                 intent.putExtra("mybundle", mybundle);
                 //Khởi động intent
                 startActivity(intent);
-            }
-        });
-        btnAddContact.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent2 = new Intent(MainActivity.this, AddContact.class);
-                startActivity(intent2);
             }
         });
     }
