@@ -132,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
                 if (n == 0){
                     msg = "Không có bản ghi nào bị xóa";
                 }else {
-                    msg = n + " Xóa thành công bản ghi!";
+                    msg = n + " bản ghi đã bị xóa thành công!";
                 }
                 Toast.makeText(MainActivity.this, msg ,Toast.LENGTH_SHORT).show();
             }
