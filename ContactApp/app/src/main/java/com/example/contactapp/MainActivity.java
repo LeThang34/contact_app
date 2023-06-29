@@ -47,8 +47,6 @@ public class MainActivity extends AppCompatActivity {
     //Test
     ArrayList<String> dsTinhThanh=new ArrayList<>();
 
-
-
     private static final String TAG = "CONTACT_TAG";
     private static final int WRITE_CONTACT_PERMISSION_CODE = 100;
     private String[] contactPermissions;
@@ -153,7 +151,6 @@ public class MainActivity extends AppCompatActivity {
 //                        .withValue(ContactsContract.CommonDataKinds.Phone.TYPE, number)
 //                        .build());
 //
-
 
                 ContentValues myValues = new ContentValues();
                 myValues.put("number", number);
