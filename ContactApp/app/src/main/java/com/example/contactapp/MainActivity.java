@@ -1,12 +1,20 @@
 package com.example.contactapp;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
+import android.content.ContentProvider;
+import android.content.ContentProviderOperation;
+import android.content.ContentProviderResult;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.provider.ContactsContract;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,6 +31,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Writer;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
@@ -37,6 +46,13 @@ public class MainActivity extends AppCompatActivity {
     ArrayAdapter<String> myadapter;
     //Test
     ArrayList<String> dsTinhThanh=new ArrayList<>();
+
+
+
+    private static final String TAG = "CONTACT_TAG";
+    private static final int WRITE_CONTACT_PERMISSION_CODE = 100;
+    private String[] contactPermissions;
+
     private void addControls() {
 
         lv=findViewById(R.id.lv);
@@ -76,6 +92,8 @@ public class MainActivity extends AppCompatActivity {
         edtName = findViewById(R.id.edtName);
         edtNumber = findViewById(R.id.edtNumber);
 
+        contactPermissions = new String[]{Manifest.permission.WRITE_CONTACTS};
+
         btnInsert = findViewById(R.id.btnInsert);
         btnDelete = findViewById(R.id.btnDelete);
         btnUpdate = findViewById(R.id.btnUpdate);
@@ -108,31 +126,78 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
 //                insert();
 
-                String name = edtName.getText().toString();
-                String number = edtNumber.getText().toString();
+                String name = edtName.getText().toString().trim();
+                String number = edtNumber.getText().toString().trim();
+                ArrayList <ContentProviderOperation> cpo = new ArrayList<>();
+
+                int rawContactID = cpo.size();
+
+                cpo.add(ContentProviderOperation.newInsert(
+                        ContactsContract.RawContacts.CONTENT_URI)
+                        .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null)
+                        .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, null)
+                        .build()
+                );
+
+                cpo.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                        .withValueBackReference(ContactsContract.RawContacts.Data.RAW_CONTACT_ID, rawContactID)
+                        .withValue(ContactsContract.RawContacts.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+                        .withValue(ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME, name)
+                        .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, number)
+                        .build());
+//                // add phone
+//                cpo.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+//                        .withValueBackReference(ContactsContract.RawContacts.Data.RAW_CONTACT_ID, rawContactID)
+//                        .withValue(ContactsContract.RawContacts.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+//                        .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, phoneHome)
+//                        .withValue(ContactsContract.CommonDataKinds.Phone.TYPE, number)
+//                        .build());
+//
+
+
                 ContentValues myValues = new ContentValues();
                 myValues.put("number", number);
                 myValues.put("name", name);
 
-                String msg = "";
-                if (database.insert("dbcontact", null , myValues) ==  -1){
-                    msg = "Thêm thất bại!";
-                } else {
-                    msg = "Bạn đã thêm thành công!";
+                try {
+                    ContentProviderResult[] results = getContentResolver().applyBatch(ContactsContract.AUTHORITY,cpo);
+                    Log.d(TAG, "saveContact: Saved..");
+                } catch (Exception e ){
+                    e.printStackTrace();
+                    Log.d(TAG, "saveContact: "+ e.getMessage());
+//                    Toast.makeText(this, ""+e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
-                Toast.makeText(MainActivity.this,msg ,Toast.LENGTH_SHORT).show();
+//                String msg = "";
+//                //  phương thức insert() là số thực thi mà khi thành công sẽ trả về
+//                //  một giá trị dương là số hàng được thêm vào, và -1 nếu thao tác thất bại.
+//                if (database.insert("dbcontact", null , myValues) ==  -1){
+//                    msg = "Thêm thất bại!";
+//                } else {
+//                    msg = "Bạn đã thêm thành công!";
+//                }
+//                Toast.makeText(MainActivity.this,msg ,Toast.LENGTH_SHORT).show();
+                saveContact();
             }
         });
+
+//        private boolean isWriteContactPermissionEnabled(){
+//            boolean result = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_CONTACTS) == (PackageManager.PERMISSION_GRANTED);
+//
+//            return result;
+//        }
+
+
         btnDelete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String name = edtName.getText().toString();
+                // mảng string chưa đối số
                 int n = database.delete("dbcontact", "name = ?", new String[]{name});
                 String msg = "";
                 if (n == 0){
                     msg = "Không có bản ghi nào bị xóa";
                 }else {
-                    msg = n + " bản ghi đã bị xóa thành công!";
+                    msg = n + " bản ghi đã bị xóa!";
                 }
                 Toast.makeText(MainActivity.this, msg ,Toast.LENGTH_SHORT).show();
             }
@@ -145,6 +210,7 @@ public class MainActivity extends AppCompatActivity {
                 ContentValues myValues = new ContentValues();
                 myValues.put("number", number);
                 myValues.put("name", name);
+                //mảng string chưa đối số
                 int n = database.update("dbcontact",myValues,"name = ?", new String[]{name});
                 String msg = "";
                 if (n == 0){
@@ -199,6 +265,12 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void saveContact() {
+        String name = edtName.getText().toString();
+        String number = edtNumber.getText().toString();
+
+    }
+
     //Hàm copy csdl Sqlite từ thư mục assets vào thư mục cài đặt ứng dụng
     private void processCopy() {
         File dbFile = getDatabasePath(DATABASE_NAME);
@@ -245,4 +317,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
+
+
 }
